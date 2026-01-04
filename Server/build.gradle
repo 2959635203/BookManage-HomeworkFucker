@@ -1,0 +1,99 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '4.0.1'
+    id 'io.spring.dependency-management' version '1.1.6'
+}
+
+group = 'com.northgod'
+version = '1.0.0'
+description = 'Bookstore Server'
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+    all {
+        resolutionStrategy {
+            cacheChangingModulesFor 0, 'seconds'
+            cacheDynamicVersionsFor 0, 'seconds'
+            force 'com.google.guava:guava:33.0.0-jre'
+        }
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Spring Boot Starters (包含 Jackson 3.x, Tomcat 11 等)
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator' // 指标监控
+
+    // 数据库与缓存
+    runtimeOnly 'org.postgresql:postgresql'
+    implementation 'com.github.ben-manes.caffeine:caffeine:3.1.8'
+
+    // 工具库
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    // 测试
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+// 配置Java编译选项，保留参数名信息（用于Spring参数绑定）
+compileJava {
+    options.compilerArgs << '-parameters'
+}
+
+compileTestJava {
+    options.compilerArgs << '-parameters'
+}
+
+tasks.withType(JavaCompile) {
+    options.compilerArgs << '-parameters'
+}
+
+// 为支持虚拟线程，配置 bootRun 和 test 任务的 JVM 参数
+// 注意：Java 25中虚拟线程已经是正式特性，不需要--enable-preview参数
+tasks.named('bootRun') {
+    jvmArgs = [
+            '-Dspring.threads.virtual.enabled=true',
+            '-Dfile.encoding=UTF-8',
+            '-Dsun.jnu.encoding=UTF-8',
+            '-Duser.language=zh',
+            '-Duser.region=CN',
+            '-Duser.country=CN',
+            // 可选：启用紧凑对象头以减少内存占用（Java 25新特性）
+            '-XX:+UseCompactObjectHeaders'
+    ]
+    // 设置控制台编码
+    doFirst {
+        if (System.getProperty('os.name').toLowerCase().contains('windows')) {
+            try {
+                Runtime.getRuntime().exec('chcp 65001')
+            } catch (Exception e) {
+                // 忽略
+            }
+        }
+    }
+}
+
+tasks.named('test') {
+    jvmArgs = [
+            '-Dspring.threads.virtual.enabled=true'
+    ]
+}
