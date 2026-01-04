@@ -1,0 +1,127 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'org.springframework.boot' version '4.0.1'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.northgod'
+version = '0.0.1-SNAPSHOT'
+description = 'Server'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+application {
+    mainClass = 'com.northgod.client.Main'
+    applicationDefaultJvmArgs = [
+            '-Dfile.encoding=UTF-8',
+            '-Dsun.jnu.encoding=UTF-8',
+            '-Duser.language=zh',
+            '-Duser.region=CN',
+            '-Duser.country=CN'
+    ]
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven { url 'https://repo.spring.io/milestone' }
+    maven { url 'https://jitpack.io' }  // 添加Jitpack仓库
+}
+
+dependencies {
+    // ========== Spring Boot Starters (核心) ==========
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
+
+    // ========== 数据库 ==========
+    runtimeOnly 'org.postgresql:postgresql'
+
+    // ========== 开发工具 ==========
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    // ========== 缓存实现 ==========
+    implementation 'com.github.ben-manes.caffeine:caffeine:3.1.8'
+
+    // ========== 网络库增强 ==========
+    implementation 'io.github.resilience4j:resilience4j-retry:2.1.0'
+    implementation 'io.github.resilience4j:resilience4j-circuitbreaker:2.1.0'
+
+    // ========== 工具库 ==========
+    implementation 'org.apache.commons:commons-lang3:3.14.0'
+    implementation 'commons-io:commons-io:2.15.1'
+
+    // ========== 测试 ==========
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.2'
+
+    implementation 'org.slf4j:slf4j-api:2.0.9'
+    implementation 'org.slf4j:slf4j-simple:2.0.9'
+}
+
+// 设置编译和运行的编码
+compileJava {
+    options.encoding = 'UTF-8'
+    options.compilerArgs << '-parameters'
+}
+
+compileTestJava {
+    options.encoding = 'UTF-8'
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+tasks.named('run') {
+    systemProperty 'file.encoding', 'UTF-8'
+    systemProperty 'sun.jnu.encoding', 'UTF-8'
+    systemProperty 'user.language', 'zh'
+    systemProperty 'user.region', 'CN'
+    systemProperty 'user.country', 'CN'
+    // 设置控制台编码
+    doFirst {
+        if (System.getProperty('os.name').toLowerCase().contains('windows')) {
+            try {
+                Runtime.getRuntime().exec('chcp 65001')
+            } catch (Exception e) {
+                // 忽略
+            }
+        }
+    }
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+    systemProperty 'file.encoding', 'UTF-8'
+}
+
+// Disable plain jar task, only use bootJar for executable jar
+jar {
+    archiveBaseName = 'bookstore-client'
+    archiveVersion = '1.0.0'
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    enabled = false  // Disable plain jar, use bootJar instead
+}
+
+// Configure bootJar to create executable fat jar
+bootJar {
+    archiveBaseName = 'bookstore-client'
+    archiveVersion = '1.0.0'
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    mainClass = 'com.northgod.client.Main'
+}
