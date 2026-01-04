@@ -388,3 +388,4 @@ SELECT b FROM Book b LEFT JOIN FETCH b.transactions WHERE b.id = :id
 
 
 
+
